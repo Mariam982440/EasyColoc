@@ -17,7 +17,19 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+
+            // il peut etre un admin ou un user
+            $table->string('role_type')->default('user');
+
+            // si true alors c'est un admin sinon c'est un user
+            $table->boolean('is_owner')->default(false);
+
+            $table->integer('reputation_score')->default(0);
+            $table ->timestamp('banned_at')->nullable();
+
             $table->rememberToken();
+            $table->foreignId('current_team_id')->nullable();
+            $table->string('profile_photo_path', 2048)->nullable();
             $table->timestamps();
         });
 
