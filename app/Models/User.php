@@ -69,6 +69,34 @@ class User extends Authenticatable
         ];
     }
 
+    public function colocations()  
+    {
+        return $this->belongsToMany(Colocation::class, 'user_colocation')
+            ->withPivot('role', 'joined_at', 'left_at');
+        
+    }
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    // Dettes que l'utilisateur doit payer
+    public function debts()
+    {
+        return $this->hasMany(Payment::class, 'debtor_id');
+    }
+
+    // Argent que l'on doit rembourser à l'utilisateur
+    public function credits()
+    {
+        return $this->hasMany(Payment::class, 'creditor_id');
+    }
+
+    public function currentColocation()
+    {
+        return $this->colocations()->wherePivot('left_at', null)->first();
+    }
+
     public function isAdmin(): bool
     {
         return $this->role_type === 'admin';
