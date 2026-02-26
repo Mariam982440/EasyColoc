@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Colocation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
 
 class ColocationController extends Controller
 {
@@ -12,7 +15,8 @@ class ColocationController extends Controller
      */
     public function index()
     {
-        $colocations = Colocation::all();
+        
+        $colocations = Auth::user()->colocations()->orderBy('joined_at')->get();
         return view('colocations.index', compact('colocations'));
     }
 
@@ -30,6 +34,7 @@ class ColocationController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
     public function store(Request $request)
     {
         $request->validate([
@@ -46,6 +51,9 @@ class ColocationController extends Controller
             'role' => 'owner',
             'joined_at' => now(),
         ])
+        $user->is_owner = true;
+        $user->save();
+
         return redirect()->route('colocations.show', $coloc->id)
                 ->with('success', 'Colocation créée avec succès !');
     }
@@ -55,7 +63,8 @@ class ColocationController extends Controller
      */
     public function show(Colocation $colocation)
     {
-        
+        $colocation->load(['activeMembers', 'expenses.payer', 'expenses.category']);
+        return view('colocations.show', compact('clocation'));
     }
 
     /**
@@ -79,6 +88,24 @@ class ColocationController extends Controller
      */
     public function destroy(Colocation $colocation)
     {
-        //
+        $user = Auth::user();
+        // on regarde dans la table pivot si il est owner de cette collocation
+        $membership = $user->colocations()->where('colocation_id', $colocation->id)->first();
+
+        if (!$membership || $membership->pivot->role !== 'owner') {
+        return back()->with('error', 'Action non autorisée : vous n\'êtes pas l\'Owner.');
+
+        $colocation->update([
+        'status' => 'cancelled'
+        ]);
+
+        $user->update([
+            'is_owner' => false
+        ]);
+
+        $user->colocations()->updateExistingPivot($colocation->id, [
+            'left_at' => now()
+        ]);
+    }
     }
 }
