@@ -12,7 +12,8 @@ class ColocationController extends Controller
      */
     public function index()
     {
-        //
+        $colocations = Colocation::all();
+        return view('colocations.index', compact('colocations'));
     }
 
     /**
@@ -20,7 +21,10 @@ class ColocationController extends Controller
      */
     public function create()
     {
-        //
+        if(auth()->user()->currentColocation) {
+            return redirect()->route('dashboard')->with('error', 'vous avez deja une colocation active');
+                
+        return view('colocations.index');
     }
 
     /**
@@ -28,7 +32,22 @@ class ColocationController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+        $user= Auth::user();
+
+        $colocation = Colocation::create([
+            'name' => $request->name,
+            'status' => 'active',
+        ]);
+        // un enregistrement dans le pivot
+        $user->colocation()->attach($colocation->id,[
+            'role' => 'owner',
+            'joined_at' => now(),
+        ])
+        return redirect()->route('colocations.show', $coloc->id)
+                ->with('success', 'Colocation créée avec succès !');
     }
 
     /**
@@ -36,7 +55,7 @@ class ColocationController extends Controller
      */
     public function show(Colocation $colocation)
     {
-        //
+        
     }
 
     /**
