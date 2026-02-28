@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use App\Models\Invitation;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
@@ -12,7 +16,7 @@ class PaymentController extends Controller
      */
     public function index()
     {
-        //
+        
     }
 
     /**
@@ -20,7 +24,7 @@ class PaymentController extends Controller
      */
     public function create()
     {
-        //
+        return view('index.blade.php');
     }
 
     /**
@@ -28,38 +32,57 @@ class PaymentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate[(
+            'email' => 'string|email',
+        )];
+
+        $user = Auth::user();
+        $coloc = $user->currentColocation();
+
+        if(!$user->is_owner() || !$coloc){
+            return back()->view('error', 'Seul le propriétaire peut envoyer des invitations.');
+        }
+        $token = Str::random();
+
+        Invitation::create([
+            'email' => $request->email,
+            'token' => $token,
+            'colocation_id' => $coloc->id,
+            'status' => 'pending',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $lien = route('invitation.accept', $token);
+
+        return back()->with('success', 'Invitation créée ! Voici le lien à envoyer : ' . $lien);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Payment $payment)
-    {
-        //
-    }
+    public function accept($token){
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Payment $payment)
-    {
-        //
-    }
+        $invitation = Invitation::where('token', $token)
+            ->where('status', 'pending')
+            ->first();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Payment $payment)
-    {
-        //
-    }
+        if (!$invitation) {
+        return redirect()->route('dashboard')->with('error', 'Lien invalide ou déjà utilisé.');
+        }
+        $user = Auth::user();
+        if ($user->currentColocation()) {
+            return redirect()->route('dashboard')->with('error', 'Vous faites déjà partie d\'une colocation.');
+        }
+        Db::transaction(function() use($invitation, $user){
+            // on lie l'user à la colocation indiquée dans l'invitation
+            $user->colocation()->attach($invitation->colocation_id,[
+                'role' => 'member',
+                'joined_at' => now(),
+            ]);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Payment $payment)
-    {
-        //
+            $invitation->update([
+                'status' => 'accepted'
+            ]);
+
+        });
+
+        return redirect()->route('dashboard')->with('success', 'Bienvenue dans votre nouvelle colocation !');
     }
 }
