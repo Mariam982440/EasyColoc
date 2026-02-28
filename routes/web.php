@@ -20,4 +20,6 @@ Route::middleware(['auth:sanctum',config('jetstream.auth_session'),'verified',])
     Route::post('/colocations', [ColocationController::class, 'store'])->name('colocations.store');
     Route::get('/colocations/{colocation}', [ColocationController::class, 'show'])->name('colocations.show');
     Route::delete('/colocations/{colocation}', [ColocationController::class, 'destroy'])->name('colocations.destroy');
+    Route::post('/invitations', [InvitationController::class, 'store'])->name('invitations.store');
+    Route::get('/join/{token}', [InvitationController::class, 'accept'])->name('invitations.accept');
 });
