@@ -10,6 +10,12 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-xs font-bold shadow-sm">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <!-- HEADER DE LA COLOC -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
             <div>
@@ -33,7 +39,6 @@
             
             <!-- COLONNE GAUCHE : DÉPENSES (2/3) -->
             <div class="lg:col-span-2 space-y-6">
-                
                 <!-- RÉSUMÉ FINANCIER DYNAMIQUE -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-white border border-slate-200 p-5 rounded-xl">
@@ -44,7 +49,6 @@
                     </div>
                     <div class="bg-white border border-slate-200 p-5 rounded-xl">
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mon solde actuel</p>
-                        {{-- Calcul du solde : Ce qu'on me doit - Ce que je dois --}}
                         @php
                             $ceQueJeDois = \App\Models\Payment::where('colocation_id', $colocation->id)->where('debtor_id', Auth::id())->where('is_paid', false)->sum('amount');
                             $ceQuOnMeDois = \App\Models\Payment::where('colocation_id', $colocation->id)->where('creditor_id', Auth::id())->where('is_paid', false)->sum('amount');
@@ -91,9 +95,8 @@
                 </div>
             </div>
 
-            <!-- COLONNE DROITE : MEMBRES & DETTES (1/3) -->
+            <!-- COLONNE DROITE : MEMBRES & DETTES -->
             <div class="space-y-6">
-                
                 <!-- LISTE DES MEMBRES -->
                 <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Membres</h3>
@@ -109,9 +112,28 @@
                                     <p class="text-[9px] text-slate-400 uppercase font-black tracking-tighter">{{ $member->pivot->role }}</p>
                                 </div>
                             </div>
-                            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                                {{ $member->reputation_score }} pts
-                            </span>
+                            
+                            <div class="flex items-center gap-3">
+                                <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                    {{ $member->reputation_score }} pts
+                                </span>
+
+                                <!-- ACTIONS DE MEMBRES (RETIRER / QUITTER) -->
+                                @if(Auth::user()->is_owner && $member->id !== Auth::id())
+                                    {{-- L'Owner retire un membre --}}
+                                    <form action="{{ route('membership.remove', $member->id) }}" method="POST" onsubmit="return confirm('Retirer ce membre ? Ses dettes vous seront transférées.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-[10px] font-bold text-rose-500 uppercase hover:underline">Retirer</button>
+                                    </form>
+                                @elseif($member->id === Auth::id() && !Auth::user()->is_owner)
+                                    {{-- Le membre quitte de lui-même --}}
+                                    <form action="{{ route('membership.leave') }}" method="POST" onsubmit="return confirm('Quitter la colocation ? Vos dettes seront transférées au propriétaire.')">
+                                        @csrf
+                                        <button type="submit" class="text-[10px] font-bold text-rose-500 uppercase hover:underline">Quitter</button>
+                                    </form>
+                                @endif
+                            </div>
                         </div>
                         @endforeach
                     </div>
@@ -130,7 +152,7 @@
                     @endif
                 </div>
 
-                <!-- RÉSUMÉ DES DETTES (QUI DOIT À QUI) -->
+                <!-- RÉSUMÉ DES DETTES -->
                 <div class="bg-slate-900 rounded-xl p-5 shadow-xl text-white">
                     <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Règlements en attente</h3>
                     <div class="space-y-4">
@@ -152,7 +174,6 @@
                                     </span>
                                 </div>
 
-                                {{-- Bouton pour payer (Seul le débiteur peut marquer comme payé) --}}
                                 @if($payment->debtor_id == Auth::id())
                                     <form action="{{ route('payments.markAsPaid', $payment->id) }}" method="POST">
                                         @csrf

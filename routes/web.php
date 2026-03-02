@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\MembershipController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -30,7 +31,8 @@ Route::middleware(['auth:sanctum',config('jetstream.auth_session'),'verified',])
     Route::get('/expenses/create', [ExpenseController::class, 'create'])->name('expenses.create');
     Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
 
-    // PATCH car on modifie juste une colonne (is_paid)
-    Route::patch('/payments/{payment}/mark-as-paid', [PaymentController::class, 'markAsPaid'])->name('payments.markAsPaid');
     
+    Route::patch('/payments/{payment}/mark-as-paid', [PaymentController::class, 'markAsPaid'])->name('payments.markAsPaid');
+    Route::post('/colocations/leave', [MembershipController::class, 'leave'])->name('membership.leave');
+    Route::delete('/membership/remove/{member}', [MembershipController::class, 'remove'])->name('membership.remove');
     });
