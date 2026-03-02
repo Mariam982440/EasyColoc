@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ColocationController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\InvitationController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -22,4 +23,5 @@ Route::middleware(['auth:sanctum',config('jetstream.auth_session'),'verified',])
     Route::delete('/colocations/{colocation}', [ColocationController::class, 'destroy'])->name('colocations.destroy');
     Route::post('/invitations', [InvitationController::class, 'store'])->name('invitations.store');
     Route::get('/join/{token}', [InvitationController::class, 'accept'])->name('invitations.accept');
-});
+
+    });
