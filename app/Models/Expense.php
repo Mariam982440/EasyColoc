@@ -15,7 +15,7 @@ class Expense extends Model
         'category_id'
     ];
 
-    // celui qui a payé
+    
     public function payer()
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -31,5 +31,28 @@ class Expense extends Model
         return $this->belongsTo(Colocation::class);
     }
 
-    
+    public function createPayments()
+    {
+        $colocation = $this->colocation;
+        $members = $colocation->activeMembers;
+        $memberCount = $members->count();
+
+        if ($memberCount <= 1) return;
+
+        $amountPerPerson = $this->amount / $memberCount;
+
+        foreach ($members as $member) {
+            // on ne crée pas de dette pour celui qui a payé
+            if ($member->id !== $this->user_id) {
+                \App\Models\Payment::create([
+                    'debtor_id' => $member->id,
+                    'creditor_id' => $this->user_id,
+                    'colocation_id' => $colocation->id,
+                    'amount' => $amountPerPerson,
+                    'is_paid' => false,
+                ]);
+            }
+        }
+
+    }
 }

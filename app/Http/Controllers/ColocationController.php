@@ -70,5 +70,5 @@ class ColocationController extends Controller
         ]);
 
         return redirect()->route('colocations.index')->with('success', 'Colocation annulée');
-    }
+    }  
 }
