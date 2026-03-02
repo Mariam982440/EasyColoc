@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Expense;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ExpenseController extends Controller
 {
@@ -28,7 +30,39 @@ class ExpenseController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'description' => 'required|string|max:255',
+            'amount'      => 'required|numeric|min:0.01',
+            'category_id' => 'required|exists:categories,id',
+            'date'        => 'required|date',
+        ]);
+
+        $user = Auth::user();
+        
+        $coloc = $user->currentColocation();
+
+        if (!$coloc) {
+            return back()->with('error', 'Action impossible : vous ne faites partie d\'aucune colocation active.');
+        }
+
+        // transaction car on va toucher à deux tables (expenses et payments)
+        DB::transaction(function () use ($validated, $user, $coloc) {
+            
+            $expense = Expense::create([
+                'description'   => $validated['description'],
+                'amount'        => $validated['amount'],
+                'user_id'       => $user->id,           
+                'colocation_id' => $coloc->id,  
+                'category_id'   => $validated['category_id'],
+                'date'          => $validated['date'],
+            ]);
+
+            $expense->createPayments();
+        });
+
+        return redirect()->route('colocations.show', $coloc->id)
+                         ->with('success', 'Dépense enregistrée et partagée avec succès !');
+    
     }
 
     /**

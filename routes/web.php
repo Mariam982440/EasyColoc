@@ -24,4 +24,11 @@ Route::middleware(['auth:sanctum',config('jetstream.auth_session'),'verified',])
     Route::post('/invitations', [InvitationController::class, 'store'])->name('invitations.store');
     Route::get('/join/{token}', [InvitationController::class, 'accept'])->name('invitations.accept');
 
+
+    Route::get('/expenses/create', [ExpenseController::class, 'create'])->name('expenses.create');
+    Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+
+    // PATCH car on modifie juste une colonne (is_paid)
+    Route::patch('/payments/{payment}/mark-as-paid', [PaymentController::class, 'markAsPaid'])->name('payments.markAsPaid');
+    
     });
