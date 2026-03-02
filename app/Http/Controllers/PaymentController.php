@@ -26,3 +26,4 @@ class PaymentController extends Controller
         return back()->with('success', 'Paiement confirmé ! Votre dette a été effacée.');
     }
 }
+ 
