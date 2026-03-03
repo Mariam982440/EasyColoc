@@ -6,13 +6,16 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\AdminController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth:sanctum',config('jetstream.auth_session'),'verified',])->group(function () {
-    
+Route::middleware(['auth:sanctum',
+    config('jetstream.auth_session'),'verified',
+    ])->group(function () {
+
     Route::get('/dashboard',function(){
         $user = Auth::user();
         $colocation = $user->currentColocation();
@@ -35,4 +38,13 @@ Route::middleware(['auth:sanctum',config('jetstream.auth_session'),'verified',])
     Route::patch('/payments/{payment}/mark-as-paid', [PaymentController::class, 'markAsPaid'])->name('payments.markAsPaid');
     Route::post('/colocations/leave', [MembershipController::class, 'leave'])->name('membership.leave');
     Route::delete('/membership/remove/{member}', [MembershipController::class, 'remove'])->name('membership.remove');
+    
+    
+    Route::middleware(['auth', 'can:admin-only'])->group(function () {
+    
+    Route::get('/admin', [App\Http\Controllers\AdminController::class, 'index'])->name('admin.index');
+    Route::post('/admin/ban/{user}', [App\Http\Controllers\AdminController::class, 'toggleBan'])->name('admin.toggle-ban');
+});
+    
+    
     });

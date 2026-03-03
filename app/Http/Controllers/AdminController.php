@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use GuzzleHttp\Psr7\Message;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Payment;
@@ -12,6 +13,11 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminController extends Controller
 {
+    public function index()
+    {
+        $users = User::all();
+        return view('admin.index', compact('users'));
+    }
     public function toggleBan(User $user){
 
         $check = Auth::user();
@@ -52,6 +58,7 @@ class AdminController extends Controller
                 'banned_at' => now()
             ]);
         });
+        return back();
     }
     
 }
