@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Expense;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -12,8 +13,15 @@ class ExpenseController extends Controller
 
     public function create()
     {
+        $user = Auth::user();
+        
+        $coloc = $user->currentColocation();
 
-        $categories = \App\Models\Category::all();
+        if (!$coloc) {
+            return back()->with('error', 'Action impossible : vous ne faites partie d\'aucune colocation active.');
+        }
+
+        $categories = Category::all();
         
         return view('expenses.create', compact('categories'));
     }
