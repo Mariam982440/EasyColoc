@@ -54,11 +54,16 @@ class ColocationController extends Controller
     public function destroy(Colocation $colocation)
     {
         $user = Auth::user();
-        
         $membership = $user->colocations()->where('colocation_id', $colocation->id)->first();
 
         if (!$membership || $membership->pivot->role !== 'owner') {
             return back()->with('error', 'Action non autorisée : vous n\'êtes pas l\'Owner.');
+        }
+
+        $hasUnpaidPayments = $colocation->payments()->where('is_paid', false)->exists();
+
+        if ($hasUnpaidPayments) {
+            return back()->with('error', 'Impossible d\'annuler : il reste des dettes non réglées dans cette colocation.');
         }
 
         $colocation->update(['status' => 'cancelled']);

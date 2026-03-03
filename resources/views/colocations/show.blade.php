@@ -29,7 +29,18 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <a href="{{ route('expenses.create') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-indigo-100 hover:bg-indigo-700 transition">
+                {{-- BOUTON ANNULATION (Visible uniquement pour l'Owner) --}}
+                @if(Auth::user()->is_owner)
+                    <form action="{{ route('colocations.destroy', $colocation->id) }}" method="POST" onsubmit="return confirm('Voulez-vous vraiment annuler cette colocation ? Tous les membres seront libérés. L\'opération échouera s\'il reste des dettes.')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-xs font-bold text-rose-500 hover:text-rose-700 border border-rose-200 px-4 py-2 rounded-lg transition uppercase">
+                            Annuler la colocation
+                        </button>
+                    </form>
+                @endif
+
+                <a href="{{ route('expenses.create') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-indigo-100 hover:bg-indigo-700 transition uppercase">
                     + Ajouter une dépense
                 </a>
             </div>
