@@ -22,7 +22,7 @@ class AdminController extends Controller
 
         $check = Auth::user();
     
-        if (!$user->role_type === 'admin') {
+        if ($check->role_type !== 'admin') {
             return back()->with('error', 'Action réservée à l admin.');
         }
 

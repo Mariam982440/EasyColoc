@@ -20,6 +20,7 @@ class MembershipController extends Controller
         if ($user->is_owner) {
             return back()->with('error', 'En tant que propriétaire, vous devez annuler la colocation pour la quitter.');
         }
+        
         $owner = $coloc->users()->where('is_owner', true)->first();
 
         $hasDebt = Payment::where('colocation_id', $coloc->id)
